@@ -249,6 +249,52 @@
       .t1{width:120px;}.t2{width:170px;}.t3{width:225px;}.plate{width:248px;}
       .candle-row{gap:1rem;}
     }
+
+    /* ══ QUIZ LOCK SCREEN ══ */
+    #quizLock{
+      position:fixed;inset:0;z-index:300;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--bg);
+    }
+    #quizCard{
+      width:min(480px,90vw);
+      background:rgba(255,255,255,.045);
+      backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+      border:1px solid rgba(212,168,67,.2);
+      border-radius:22px;
+      padding:2.6rem 2.2rem 2rem;
+      text-align:center;
+      box-shadow:0 30px 80px rgba(0,0,0,.72),0 0 60px rgba(212,168,67,.05);
+    }
+    #qLockIcon{font-size:2.8rem;margin-bottom:.75rem;display:block;transition:all .5s;}
+    #qSubtitle{
+      font-family:'Cormorant Garamond',serif;font-style:italic;
+      font-size:1rem;color:rgba(245,238,248,.5);margin-bottom:1.4rem;
+    }
+    #qProgress{display:flex;gap:.6rem;justify-content:center;margin-bottom:.45rem;}
+    .qDot{width:8px;height:8px;border-radius:50%;background:rgba(212,168,67,.2);transition:all .4s;}
+    .qDot.on{background:var(--gold);box-shadow:0 0 10px rgba(212,168,67,.55);width:24px;border-radius:4px;}
+    .qDot.done{background:rgba(212,168,67,.5);}
+    #qCounter{font-size:.58rem;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);opacity:.65;margin-bottom:1.15rem;}
+    #qText{
+      font-family:'Cormorant Garamond',serif;font-size:1.15rem;line-height:1.75;
+      color:rgba(245,238,248,.9);margin-bottom:1.5rem;min-height:3.5rem;
+    }
+    #qOptions{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem;}
+    .qOpt{
+      padding:.8rem .7rem;
+      background:rgba(255,255,255,.04);border:1px solid rgba(212,168,67,.15);
+      border-radius:12px;color:rgba(245,238,248,.8);
+      font-family:'Cormorant Garamond',serif;font-size:.92rem;
+      cursor:none;transition:all .22s;text-align:left;line-height:1.35;
+    }
+    .qOpt:hover{background:rgba(212,168,67,.1);border-color:rgba(212,168,67,.4);transform:translateY(-2px);}
+    .qOpt.correct{background:rgba(80,200,120,.14);border-color:rgba(80,200,120,.5);color:#6ed490;}
+    .qOpt.wrong{background:rgba(220,60,60,.11);border-color:rgba(220,60,60,.35);color:#e07070;}
+    #qFeedback{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.9rem;min-height:1.3rem;transition:color .3s;}
+    @keyframes qShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-10px);}40%{transform:translateX(10px);}60%{transform:translateX(-8px);}80%{transform:translateX(8px);}}
+    .quizShake{animation:qShake .4s ease;}
+    @media(max-width:400px){#qOptions{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -263,6 +309,28 @@
 <div class="aurora"></div>
 <canvas id="particles"></canvas>
 <canvas id="fireworks"></canvas>
+
+<!-- ══════ QUIZ LOCK SCREEN ══════ -->
+<div id="quizLock">
+  <div id="quizCard">
+    <span id="qLockIcon">🔒</span>
+    <p id="qSubtitle">Answer 3 questions about us to unlock your gift 💕</p>
+    <div id="qProgress">
+      <div class="qDot"></div>
+      <div class="qDot"></div>
+      <div class="qDot"></div>
+    </div>
+    <p id="qCounter"></p>
+    <p id="qText"></p>
+    <div id="qOptions">
+      <button class="qOpt"></button>
+      <button class="qOpt"></button>
+      <button class="qOpt"></button>
+      <button class="qOpt"></button>
+    </div>
+    <p id="qFeedback">&nbsp;</p>
+  </div>
+</div>
 
 <!-- ══════ INTRO ══════ -->
 <div id="intro">
@@ -482,6 +550,82 @@ function spawnEmoji() {
 }
 setInterval(spawnEmoji, 900);
 
+/* ══ RELATIONSHIP QUIZ ══ */
+const quizData = [
+  { q:"What's the first thing I think about when I wake up?",
+    opts:['Coffee ☕','You 💕','Work 💼','Going back to sleep 😴'], correct:1 },
+  { q:"How do I feel when you're not around?",
+    opts:['Bored but okay 😐','Fine honestly 🤷',"Like something's missing 💔",'Relieved 😅'], correct:2 },
+  { q:"What's my promise to you today?",
+    opts:['Never steal the blanket 🛏️','Always share my food 🍕','Reply to texts faster 📱','Love you every single day 💖'], correct:3 }
+];
+let qIdx = 0;
+const qLockEl  = document.getElementById('quizLock');
+const qCardEl  = document.getElementById('quizCard');
+const qTextEl  = document.getElementById('qText');
+const qOptEls  = document.querySelectorAll('.qOpt');
+const qFbEl    = document.getElementById('qFeedback');
+const qCtrEl   = document.getElementById('qCounter');
+const qDotEls  = document.querySelectorAll('.qDot');
+const qLockIco = document.getElementById('qLockIcon');
+const qFbMsgs  = ["Aww, obviously 💕", "I knew you'd know 💔", "That's a promise 💖"];
+
+function qLoad(i) {
+  const d = quizData[i];
+  qTextEl.textContent = d.q;
+  qOptEls.forEach((b,j) => { b.textContent = d.opts[j]; b.className = 'qOpt'; b.disabled = false; });
+  qFbEl.innerHTML = '&nbsp;';
+  qCtrEl.textContent = `Question ${i+1} of ${quizData.length}`;
+  qDotEls.forEach((dot,j) => {
+    dot.classList.remove('on','done');
+    if (j < i) dot.classList.add('done');
+    if (j === i) dot.classList.add('on');
+  });
+}
+
+function qAnswer(sel) {
+  const right = quizData[qIdx].correct;
+  qOptEls.forEach(b => b.disabled = true);
+  if (sel === right) {
+    qOptEls[sel].classList.add('correct');
+    qFbEl.style.color = '#6ed490';
+    qFbEl.textContent = qFbMsgs[qIdx];
+    setTimeout(() => {
+      qDotEls[qIdx].classList.remove('on'); qDotEls[qIdx].classList.add('done');
+      if (qIdx < quizData.length - 1) {
+        qIdx++;
+        gsap.to(qCardEl, { x:-40, opacity:0, duration:.35, onComplete:() => {
+          qLoad(qIdx);
+          gsap.fromTo(qCardEl, { x:40, opacity:0 }, { x:0, opacity:1, duration:.4 });
+        }});
+      } else {
+        qLockIco.textContent = '🔓';
+        qFbEl.style.color = 'var(--gold)';
+        qFbEl.textContent = '✨ You know us perfectly!';
+        gsap.to(qCardEl, { scale:1.05, duration:.25, yoyo:true, repeat:1, ease:'power2.inOut',
+          onComplete:() => gsap.to(qLockEl, { opacity:0, duration:1.4, delay:.7,
+            onComplete:() => {
+              qLockEl.style.visibility = 'hidden'; qLockEl.style.pointerEvents = 'none';
+              introTL.play();
+            }
+          })
+        });
+      }
+    }, 750);
+  } else {
+    qOptEls[sel].classList.add('wrong');
+    qOptEls[right].classList.add('correct');
+    qFbEl.style.color = '#e07070';
+    qFbEl.textContent = 'Not quite... try again! 😄';
+    qCardEl.classList.add('quizShake');
+    setTimeout(() => qCardEl.classList.remove('quizShake'), 450);
+    setTimeout(() => qLoad(qIdx), 1800);
+  }
+}
+
+qOptEls.forEach((b,i) => b.addEventListener('click', () => qAnswer(i)));
+qLoad(0);
+
 /* ══ INTRO SEQUENCE ══ */
 document.body.style.overflow = 'hidden';
 
@@ -493,7 +637,7 @@ gsap.set(['.ifor', '.idate', '.ibtn'], { opacity: 0, y: 20 });
 gsap.set('.idiv', { opacity: 0 });
 
 // Timeline: chatbox → name reveal
-const introTL = gsap.timeline();
+const introTL = gsap.timeline({ paused: true });
 introTL
   .to('#cb1', { opacity: 1, y: 0, scale: 1, duration: .5, ease: 'back.out(1.5)' }, .7)
   .to('#td1', { opacity: 1, duration: .3 }, 1.5)
@@ -701,6 +845,13 @@ function blowOut() {
         confirmButtonText: 'My wish is made ✨',
         confirmButtonColor: '#d4a843',
         customClass: { popup: 'swal2-popup', title: 'swal2-title', confirmButton: 'swal2-confirm' }
+      }).then(() => {
+        fwOn = false;
+        gsap.to(fwCv, { opacity:0, duration:1.5, onComplete:() => {
+          fwCx.clearRect(0,0,fwCv.width,fwCv.height);
+          gsap.set(fwCv, { opacity:1 });
+        }});
+        setTimeout(() => window.scrollTo({ top:0, behavior:'smooth' }), 400);
       });
     }, 1600);
   }, 800);
