@@ -304,7 +304,7 @@
 
 <!-- MUSIC — YouTube embed -->
 <button id="musicBtn">♪</button>
-<iframe id="ytFrame" style="position:fixed;width:200px;height:112px;opacity:0;pointer-events:none;border:none;bottom:-300px;" allow="autoplay; encrypted-media" src=""></iframe>
+<iframe id="ytFrame" style="position:fixed;width:320px;height:180px;opacity:0.01;pointer-events:none;border:none;top:0;left:-400px;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen src=""></iframe>
 
 <div class="aurora"></div>
 <canvas id="particles"></canvas>
@@ -496,7 +496,7 @@ let musicOn = false;
 musicBtn.addEventListener('click', () => {
   musicOn = !musicOn;
   ytFrame.src = musicOn
-    ? 'https://www.youtube.com/embed/5cKeDvaD5eI?autoplay=1&loop=1&playlist=5cKeDvaD5eI'
+    ? 'https://www.youtube.com/embed/5cKeDvaD5eI?autoplay=1&loop=1&playlist=5cKeDvaD5eI&playsinline=1'
     : '';
   musicBtn.textContent = musicOn ? '■' : '♪';
   gsap.to(musicBtn, { scale: musicOn ? 1.2 : 1, duration: .2, yoyo: true, repeat: 1 });
